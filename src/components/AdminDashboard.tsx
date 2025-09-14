@@ -13,77 +13,112 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Tourist {
   id: string;
-  name: string;
+  full_name: string;
   location: { lat: number; lng: number };
   status: 'safe' | 'alert' | 'emergency';
   lastSeen: Date;
   riskLevel: 'low' | 'medium' | 'high';
+  role: string;
+  session_id?: string;
 }
 
 interface Alert {
   id: string;
-  touristId: string;
-  type: 'panic' | 'geofence' | 'anomaly';
+  user_id: string;
+  alert_type: string;
   message: string;
-  timestamp: Date;
-  location: { lat: number; lng: number };
-  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  location_lat?: number;
+  location_lng?: number;
+  status: string;
+  tourist_name?: string;
 }
 
 const AdminDashboard = () => {
-  const [tourists, setTourists] = useState<Tourist[]>([
-    {
-      id: 'TST-2024-001',
-      name: 'Alex Johnson',
-      location: { lat: 40.7128, lng: -74.0060 },
-      status: 'safe',
-      lastSeen: new Date(),
-      riskLevel: 'low'
-    },
-    {
-      id: 'TST-2024-002',
-      name: 'Maria Garcia',
-      location: { lat: 40.7589, lng: -73.9851 },
-      status: 'alert',
-      lastSeen: new Date(Date.now() - 300000),
-      riskLevel: 'medium'
-    },
-    {
-      id: 'TST-2024-003',
-      name: 'John Smith',
-      location: { lat: 40.6892, lng: -74.0445 },
-      status: 'emergency',
-      lastSeen: new Date(Date.now() - 120000),
-      riskLevel: 'high'
-    }
-  ]);
-
-  const [alerts, setAlerts] = useState<Alert[]>([
-    {
-      id: 'ALT-001',
-      touristId: 'TST-2024-003',
-      type: 'panic',
-      message: 'Emergency panic button activated',
-      timestamp: new Date(Date.now() - 120000),
-      location: { lat: 40.6892, lng: -74.0445 },
-      priority: 'high'
-    },
-    {
-      id: 'ALT-002',
-      touristId: 'TST-2024-002',
-      type: 'geofence',
-      message: 'Tourist entered high-risk zone',
-      timestamp: new Date(Date.now() - 300000),
-      location: { lat: 40.7589, lng: -73.9851 },
-      priority: 'medium'
-    }
-  ]);
-
+  const [tourists, setTourists] = useState<Tourist[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+
+  // Load data from database
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      // Load tourist sessions with profile data
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('tourist_sessions')
+        .select(`
+          *,
+          profiles!inner(id, full_name, role, user_id)
+        `)
+        .eq('is_active', true);
+
+      if (sessionsError) throw sessionsError;
+
+      // Transform sessions data into tourists format
+      const touristsData: Tourist[] = (sessionsData || []).map(session => ({
+        id: session.profiles.id,
+        full_name: session.profiles.full_name,
+        location: {
+          lat: parseFloat(session.current_location_lat?.toString() || '40.7128'),
+          lng: parseFloat(session.current_location_lng?.toString() || '-74.0060')
+        },
+        status: session.safety_status === 'emergency' ? 'emergency' as const :
+                session.safety_status === 'alert' ? 'alert' as const : 'safe' as const,
+        lastSeen: new Date(session.last_ping || session.updated_at),
+        riskLevel: session.safety_status === 'emergency' ? 'high' as const :
+                   session.safety_status === 'alert' ? 'medium' as const : 'low' as const,
+        role: session.profiles.role,
+        session_id: session.id
+      }));
+
+      setTourists(touristsData);
+
+      // Load active alerts
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('emergency_alerts')
+        .select(`
+          *,
+          profiles!inner(full_name)
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (alertsError) throw alertsError;
+
+      const alertsFormatted: Alert[] = (alertsData || []).map(alert => ({
+        ...alert,
+        tourist_name: alert.profiles.full_name
+      }));
+
+      setAlerts(alertsFormatted);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && (profile?.role === 'admin' || profile?.role === 'police')) {
+      loadData();
+    }
+  }, [user, profile]);
 
   const stats = {
     totalTourists: tourists.length,
@@ -101,25 +136,61 @@ const AdminDashboard = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-emergency/10 border-emergency/20';
-      case 'medium': return 'bg-warning/10 border-warning/20';
-      case 'low': return 'bg-success/10 border-success/20';
+  const getPriorityColor = (alertType: string) => {
+    switch (alertType) {
+      case 'panic': return 'bg-emergency/10 border-emergency/20';
+      case 'geofence': return 'bg-warning/10 border-warning/20';
+      case 'anomaly': return 'bg-success/10 border-success/20';
       default: return 'bg-muted/10 border-muted/20';
     }
   };
 
   const filteredTourists = tourists.filter(tourist =>
-    tourist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tourist.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tourist.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEmergencyResponse = (touristId: string) => {
-    setTourists(prev => prev.map(t => 
-      t.id === touristId ? { ...t, status: 'safe' as const } : t
-    ));
-    setAlerts(prev => prev.filter(a => a.touristId !== touristId));
+  const handleEmergencyResponse = async (touristId: string) => {
+    try {
+      const tourist = tourists.find(t => t.id === touristId);
+      if (!tourist) return;
+
+      // Update session status
+      if (tourist.session_id) {
+        await supabase
+          .from('tourist_sessions')
+          .update({ safety_status: 'safe' })
+          .eq('id', tourist.session_id);
+      }
+
+      // Resolve alerts for this user
+      const alertsToResolve = alerts.filter(a => a.user_id === touristId);
+      for (const alert of alertsToResolve) {
+        await supabase
+          .from('emergency_alerts')
+          .update({ 
+            status: 'resolved',
+            resolved_at: new Date().toISOString(),
+            resolved_by: user?.id
+          })
+          .eq('id', alert.id);
+      }
+
+      toast({
+        title: "Emergency Response",
+        description: `Successfully responded to emergency for ${tourist.full_name}`,
+      });
+
+      // Reload data
+      loadData();
+    } catch (error) {
+      console.error('Error responding to emergency:', error);
+      toast({
+        title: "Error",
+        description: "Failed to respond to emergency. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -134,8 +205,8 @@ const AdminDashboard = () => {
             </h1>
             <p className="text-muted-foreground mt-1">Emergency Response & Tourist Monitoring Dashboard</p>
           </div>
-          <Button variant="glass">
-            <RefreshCw className="w-4 h-4 mr-2" />
+          <Button variant="glass" onClick={loadData} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
@@ -195,20 +266,23 @@ const AdminDashboard = () => {
                 {alerts.map((alert) => (
                   <div 
                     key={alert.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${getPriorityColor(alert.priority)} hover:bg-opacity-20`}
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${getPriorityColor(alert.alert_type)} hover:bg-opacity-20`}
                     onClick={() => setSelectedAlert(alert)}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <span className="font-medium text-sm">{alert.type.toUpperCase()}</span>
+                      <span className="font-medium text-sm">{alert.alert_type.toUpperCase()}</span>
                       <span className="text-xs text-muted-foreground">
-                        {alert.timestamp.toLocaleTimeString()}
+                        {new Date(alert.created_at).toLocaleTimeString()}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                    <div className="flex items-center gap-2 text-xs">
-                      <MapPin className="w-3 h-3" />
-                      <span>{alert.location.lat.toFixed(4)}, {alert.location.lng.toFixed(4)}</span>
-                    </div>
+                    <p className="text-xs font-medium mb-1">{alert.tourist_name}</p>
+                    {alert.location_lat && alert.location_lng && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <MapPin className="w-3 h-3" />
+                        <span>{alert.location_lat.toFixed(4)}, {alert.location_lng.toFixed(4)}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -244,7 +318,7 @@ const AdminDashboard = () => {
                           tourist.status === 'alert' ? 'bg-warning' : 'bg-emergency'
                         } ${tourist.status === 'emergency' ? 'animate-emergency' : ''}`} />
                         <div>
-                          <h3 className="font-medium">{tourist.name}</h3>
+                          <h3 className="font-medium">{tourist.full_name}</h3>
                           <p className="text-sm text-muted-foreground">{tourist.id}</p>
                         </div>
                       </div>

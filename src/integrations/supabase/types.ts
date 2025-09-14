@@ -14,16 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      emergency_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          message: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          message?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          message?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country: string | null
+          created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tourist_sessions: {
+        Row: {
+          created_at: string
+          current_location_lat: number | null
+          current_location_lng: number | null
+          end_time: string | null
+          id: string
+          is_active: boolean
+          last_ping: string | null
+          safety_status: string | null
+          start_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_location_lat?: number | null
+          current_location_lng?: number | null
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          last_ping?: string | null
+          safety_status?: string | null
+          start_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_location_lat?: number | null
+          current_location_lng?: number | null
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          last_ping?: string | null
+          safety_status?: string | null
+          start_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "tourist" | "admin" | "police"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +272,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["tourist", "admin", "police"],
+    },
   },
 } as const
