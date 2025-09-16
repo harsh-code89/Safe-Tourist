@@ -54,52 +54,65 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      // Load tourist sessions with profile data
+      // Load tourist sessions
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('tourist_sessions')
-        .select(`
-          *,
-          profiles!inner(id, full_name, role, user_id)
-        `)
+        .select('*')
         .eq('is_active', true);
 
       if (sessionsError) throw sessionsError;
 
+      // Load profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of user_id to profile for easy lookup
+      const profilesMap = new Map();
+      (profilesData || []).forEach(profile => {
+        profilesMap.set(profile.user_id, profile);
+      });
+
       // Transform sessions data into tourists format
-      const touristsData: Tourist[] = (sessionsData || []).map(session => ({
-        id: session.profiles.id,
-        full_name: session.profiles.full_name,
-        location: {
-          lat: parseFloat(session.current_location_lat?.toString() || '40.7128'),
-          lng: parseFloat(session.current_location_lng?.toString() || '-74.0060')
-        },
-        status: session.safety_status === 'emergency' ? 'emergency' as const :
-                session.safety_status === 'alert' ? 'alert' as const : 'safe' as const,
-        lastSeen: new Date(session.last_ping || session.updated_at),
-        riskLevel: session.safety_status === 'emergency' ? 'high' as const :
-                   session.safety_status === 'alert' ? 'medium' as const : 'low' as const,
-        role: session.profiles.role,
-        session_id: session.id
-      }));
+      const touristsData: Tourist[] = (sessionsData || []).map(session => {
+        const profile = profilesMap.get(session.user_id);
+        return {
+          id: profile?.id || session.user_id,
+          full_name: profile?.full_name || 'Unknown',
+          location: {
+            lat: parseFloat(session.current_location_lat?.toString() || '40.7128'),
+            lng: parseFloat(session.current_location_lng?.toString() || '-74.0060')
+          },
+          status: session.safety_status === 'emergency' ? 'emergency' as const :
+                  session.safety_status === 'alert' ? 'alert' as const : 'safe' as const,
+          lastSeen: new Date(session.last_ping || session.updated_at),
+          riskLevel: session.safety_status === 'emergency' ? 'high' as const :
+                     session.safety_status === 'alert' ? 'medium' as const : 'low' as const,
+          role: profile?.role || 'tourist',
+          session_id: session.id
+        };
+      });
 
       setTourists(touristsData);
 
       // Load active alerts
       const { data: alertsData, error: alertsError } = await supabase
         .from('emergency_alerts')
-        .select(`
-          *,
-          profiles!inner(full_name)
-        `)
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (alertsError) throw alertsError;
 
-      const alertsFormatted: Alert[] = (alertsData || []).map(alert => ({
-        ...alert,
-        tourist_name: alert.profiles.full_name
-      }));
+      const alertsFormatted: Alert[] = (alertsData || []).map(alert => {
+        const profile = profilesMap.get(alert.user_id);
+        return {
+          ...alert,
+          tourist_name: profile?.full_name || 'Unknown'
+        };
+      });
 
       setAlerts(alertsFormatted);
     } catch (error) {
