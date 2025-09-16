@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { EmergencyModal } from './EmergencyModal';
 
 interface Tourist {
   id: string;
@@ -124,6 +125,36 @@ const CommandCenter = () => {
   useEffect(() => {
     if (user && (profile?.role === 'admin' || profile?.role === 'police')) {
       loadData();
+      
+      // Set up real-time subscriptions
+      const alertsChannel = supabase
+        .channel('alerts-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'emergency_alerts' },
+          () => {
+            console.log('Alert updated, refreshing data...');
+            loadData();
+          }
+        )
+        .subscribe();
+
+      const sessionsChannel = supabase
+        .channel('sessions-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'tourist_sessions' },
+          () => {
+            console.log('Session updated, refreshing data...');
+            loadData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(alertsChannel);
+        supabase.removeChannel(sessionsChannel);
+      };
     }
   }, [user, profile]);
 
@@ -232,13 +263,14 @@ const CommandCenter = () => {
               alerts.slice(0, 5).map((alert) => (
                 <div key={alert.id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-sm text-red-800">{alert.alert_type.toUpperCase()}</p>
                       <p className="text-xs text-red-600">{alert.tourist_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(alert.created_at).toLocaleTimeString()}
                       </p>
                     </div>
+                    <EmergencyModal alert={alert} onResolve={loadData} />
                   </div>
                 </div>
               ))

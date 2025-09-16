@@ -10,6 +10,9 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
 import CommandCenter from "./components/dashboard/CommandCenter";
+import LiveMap from "./components/dashboard/LiveMap";
+import AlertCenter from "./components/dashboard/AlertCenter";
+import ManageTourists from "./components/dashboard/ManageTourists";
 
 const queryClient = new QueryClient();
 
@@ -31,9 +34,9 @@ const App = () => (
               }
             >
               <Route index element={<CommandCenter />} />
-              <Route path="map" element={<div className="p-6">Live Map - Coming Soon</div>} />
-              <Route path="alerts" element={<div className="p-6">Alert Center - Coming Soon</div>} />
-              <Route path="tourists" element={<div className="p-6">Manage Tourists - Coming Soon</div>} />
+              <Route path="map" element={<LiveMap />} />
+              <Route path="alerts" element={<AlertCenter />} />
+              <Route path="tourists" element={<ManageTourists />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
