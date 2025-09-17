@@ -1,28 +1,34 @@
-# Welcome to your Lovable project
+🛡️ Smart Tourist Safety App
+🚨 Problem Statement
 
-## Project info
+Tourists often face challenges such as navigating unfamiliar areas, accidentally entering unsafe or restricted zones, or struggling to access emergency support quickly. These risks can lead to safety concerns, loss of trust, and negative travel experiences.
 
-**URL**: https://lovable.dev/projects/9c971b40-948c-4647-9927-c04e7b75855d
+💡 Our Solution
 
-## How can I edit this code?
+The Smart Tourist Safety App empowers travelers with real-time mapping, geo-fencing alerts, and emergency assistance. By combining AI, blockchain identity verification, and intuitive design, the app ensures safe navigation, quick support during emergencies, and a more secure travel experience.
 
-There are several ways of editing your application.
+Project Info
 
-**Use Lovable**
+Live URL: https://preview--safe-path-passport.lovable.app/
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9c971b40-948c-4647-9927-c04e7b75855d) and start prompting.
+✨ Features
 
-Changes made via Lovable will be committed automatically to this repo.
+Smart Map Navigation – Interactive map with safe routes highlighted.
 
-**Use your preferred IDE**
+Geo-fencing Alerts – Warns users when they approach unsafe or restricted zones.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Emergency SOS – Quick one-tap button to send location and alert authorities or trusted contacts.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Blockchain ID Passport – Secure digital identity verification for tourists.
 
-Follow these steps:
+Multi-language Support – Ensures accessibility for global travelers.
 
-```sh
+Lightweight & Fast – Built with modern web technologies for instant response.
+
+Getting Started
+
+To set up the project locally:
+
 # Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
 
@@ -30,44 +36,27 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-npm i
+npm install
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
-```
 
-**Edit a file directly in GitHub**
+Technologies Used
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Vite
 
-**Use GitHub Codespaces**
+TypeScript
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+React
 
-## What technologies are used for this project?
+shadcn-ui
 
-This project is built with:
+Tailwind CSS
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Deployment
 
-## How can I deploy this project?
+The application can be deployed to any modern hosting service that supports Node.js applications.
 
-Simply open [Lovable](https://lovable.dev/projects/9c971b40-948c-4647-9927-c04e7b75855d) and click on Share -> Publish.
+Custom Domain
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+You can configure a custom domain for the live app by using your preferred hosting provider’s domain management settings.
