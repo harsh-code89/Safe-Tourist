@@ -59,6 +59,10 @@ const Auth = () => {
         const { error } = await signUp(data.email, data.password, {
           full_name: data.full_name || '',
           role: data.role || 'tourist',
+          phone: data.phone || '',
+          emergency_contact_name: data.emergency_contact_name || '',
+          emergency_contact_phone: data.emergency_contact_phone || '',
+          country: data.country || '',
         });
         if (!error) {
           // Don't navigate immediately after signup, wait for email confirmation

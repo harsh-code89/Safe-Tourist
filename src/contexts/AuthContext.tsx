@@ -19,7 +19,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData: { full_name: string; role: 'tourist' | 'admin' | 'police' }) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userData: { full_name: string; role: 'tourist' | 'admin' | 'police'; phone?: string; emergency_contact_name?: string; emergency_contact_phone?: string; country?: string }) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, userData: { full_name: string; role: 'tourist' | 'admin' | 'police' }) => {
+  const signUp = async (email: string, password: string, userData: { full_name: string; role: 'tourist' | 'admin' | 'police'; phone?: string; emergency_contact_name?: string; emergency_contact_phone?: string; country?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
