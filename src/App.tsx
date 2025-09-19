@@ -13,6 +13,7 @@ import CommandCenter from "./components/dashboard/CommandCenter";
 import LiveMap from "./components/dashboard/LiveMap";
 import AlertCenter from "./components/dashboard/AlertCenter";
 import ManageTourists from "./components/dashboard/ManageTourists";
+import TouristApp from "./components/TouristApp";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/app" 
+              element={
+                <ProtectedRoute requiredRole="tourist">
+                  <TouristApp />
+                </ProtectedRoute>
+              }
+            />
             <Route 
               path="/" 
               element={

@@ -119,7 +119,7 @@ export function AppSidebar() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Role:</span>
               <div className="flex items-center gap-1">
-                <span className="text-xs font-medium capitalize">{profile?.role || 'Admin'}/Police</span>
+                <span className="text-xs font-medium capitalize">{profile?.role || 'Loading'}</span>
                 <ChevronDown className="w-3 h-3 text-muted-foreground" />
               </div>
             </div>

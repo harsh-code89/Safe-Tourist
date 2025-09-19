@@ -24,6 +24,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   if (requiredRole && profile?.role !== requiredRole && !['admin', 'police'].includes(profile?.role || '')) {
+    // If tourist role is required but user is admin/police, redirect to admin dashboard
+    if (requiredRole === 'tourist' && ['admin', 'police'].includes(profile?.role || '')) {
+      return <Navigate to="/" replace />;
+    }
+    // If admin/police access is needed but user is tourist, redirect to tourist app
+    if (!requiredRole && profile?.role === 'tourist') {
+      return <Navigate to="/app" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
